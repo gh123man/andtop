@@ -46,6 +46,7 @@ class DockObserver extends UEventObserver {
 
     private static final String DOCK_UEVENT_MATCH = "DEVPATH=/devices/virtual/switch/dock";
     private static final String DOCK_STATE_PATH = "/sys/class/switch/dock/state";
+    private static final String LAPDOCK_STATE_PATH = "/sys/class/switch/smartdock/state";
 
     private static final int MSG_DOCK_STATE = 0;
 
@@ -113,6 +114,26 @@ class DockObserver extends UEventObserver {
         }
     }
 
+    private final boolean lapDockCheck() {
+        char[] buffer = new char[1024];
+
+        try {
+            FileReader file = new FileReader(LAPDOCK_STATE_PATH);
+            int len = file.read(buffer, 0, 1024);
+            file.close();
+            if(Integer.valueOf((new String(buffer, 0, len)).trim()) == 1){
+		return false;
+	    } else {
+		return true;
+	    }
+        } catch (FileNotFoundException e) {
+            Slog.w(TAG, "This kernel does not have lapdock support");
+        } catch (Exception e) {
+            Slog.e(TAG, "" , e);
+        }
+	return false;
+    }
+
     void systemReady() {
         synchronized (this) {
             // don't bother broadcasting undocked here
@@ -132,6 +153,7 @@ class DockObserver extends UEventObserver {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_DOCK_STATE:
+		    if (lapDockCheck()) {
                     synchronized (this) {
                         Slog.i(TAG, "Dock state changed: " + mDockState);
 
@@ -193,6 +215,7 @@ class DockObserver extends UEventObserver {
                         }
 
                         mContext.sendStickyBroadcast(intent);
+		    }
                     }
                     break;
             }
