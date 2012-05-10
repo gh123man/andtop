@@ -133,13 +133,9 @@ class LapdockObserver extends UEventObserver {
                     synchronized (this) {
 			if(mDockState == 0){
 				setAutoRotation(true);
-				SystemProperties.set("ro.sf.lcd_density", "240");
-				runcmd("reboot");
 		    		Toast.makeText(mContext, "un-DOCKED", Toast.LENGTH_SHORT).show();
 			} else {
 				setAutoRotation(false);
-				SystemProperties.set("ro.sf.lcd_density", "120");
-				runcmd("reboot");
 				Toast.makeText(mContext, "DOCKED", Toast.LENGTH_SHORT).show();
 			}
                     break;
