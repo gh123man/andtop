@@ -35,6 +35,11 @@ import android.provider.Settings;
 import android.server.BluetoothService;
 import android.util.Log;
 import android.util.Slog;
+import android.util.DisplayMetrics;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import android.os.SystemProperties;
 
 import android.widget.Toast;
 import android.view.IWindowManager;
@@ -128,9 +133,13 @@ class LapdockObserver extends UEventObserver {
                     synchronized (this) {
 			if(mDockState == 0){
 				setAutoRotation(true);
+				SystemProperties.set("ro.sf.lcd_density", "240");
+				runcmd("reboot");
 		    		Toast.makeText(mContext, "un-DOCKED", Toast.LENGTH_SHORT).show();
 			} else {
 				setAutoRotation(false);
+				SystemProperties.set("ro.sf.lcd_density", "120");
+				runcmd("reboot");
 				Toast.makeText(mContext, "DOCKED", Toast.LENGTH_SHORT).show();
 			}
                     break;
@@ -157,4 +166,18 @@ class LapdockObserver extends UEventObserver {
                 }
             });
     }
+
+    public void runcmd(String inpt){
+	try {
+            Process p = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+	    os.writeBytes(inpt + "\n");    
+            os.writeBytes("exit\n");  
+            os.flush();
+	}
+	catch (Exception e) {
+      		Log.d("ROOT", "Root access rejected [" +
+            	e.getClass().getName() + "] : " + e.getMessage());
+   		}
+	}
 }
